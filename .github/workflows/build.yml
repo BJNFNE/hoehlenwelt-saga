@@ -1,0 +1,71 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libx11-dev libxext-dev libxrandr-dev libxcursor-dev \
+            libxi-dev libxss-dev libxfixes-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev \
+            libgles2-mesa-dev libdecor-0-dev libpulse-dev libasound2-dev libdbus-1-dev libudev-dev
+      - name: Build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DHWSAGA_BUNDLE_SDL=ON
+          cmake --build build
+      - name: Package
+        run: |
+          mkdir -p dist/hwsaga
+          cp build/hwsaga README.md dist/hwsaga/
+          tar -C dist -czf hwsaga-linux-x86_64.tar.gz hwsaga
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hwsaga-linux-x86_64
+          path: hwsaga-linux-x86_64.tar.gz
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S . -B build -A x64 -DHWSAGA_BUNDLE_SDL=ON
+          cmake --build build --config Release
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist/hwsaga | Out-Null
+          Copy-Item build/Release/hwsaga.exe, README.md dist/hwsaga/
+          Compress-Archive -Path dist/hwsaga -DestinationPath hwsaga-windows-x64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hwsaga-windows-x64
+          path: hwsaga-windows-x64.zip
+
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DHWSAGA_BUNDLE_SDL=ON \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          cmake --build build
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp -R "build/Hoehlenwelt-Saga.app" dist/
+          cp README.md dist/
+          codesign --force --deep -s - "dist/Hoehlenwelt-Saga.app"
+          ditto -c -k --keepParent dist hwsaga-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hwsaga-macos-universal
+          path: hwsaga-macos-universal.zip
