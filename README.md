@@ -108,7 +108,9 @@ Für eine Universal-App auf macOS zusätzlich `-DCMAKE_OSX_ARCHITECTURES="arm64;
 angeben.
 
 `.github/workflows/build.yml` baut alle drei Plattformen in GitHub Actions und legt fertige
-Pakete als Artefakte ab.
+Pakete als Artefakte ab. Ein Tag `vX.Y.Z` erzeugt zusätzlich ein Release mit den drei Paketen:
+
+    git tag v0.2.0 && git push origin v0.2.0
 
 ## Aufbau des Quelltexts
 

@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -69,3 +71,27 @@ jobs:
         with:
           name: hwsaga-macos-universal
           path: hwsaga-macos-universal.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Die Höhlenwelt-Saga $GITHUB_REF_NAME" \
+            --notes "Native Version für Linux, Windows und macOS. Spieldaten sind nicht enthalten: Du brauchst das CD-Image (HW.CUE + HW.BIN) oder die Dateien der Original-CD. Anleitung siehe README.
+
+          - **Windows:** hwsaga-windows-x64.zip entpacken, HW.CUE auf hwsaga.exe ziehen.
+          - **macOS:** hwsaga-macos-universal.zip entpacken, Hoehlenwelt-Saga.app per Rechtsklick → Öffnen starten (nicht signiert), HW.CUE ins Fenster ziehen.
+          - **Linux:** hwsaga-linux-x86_64.tar.gz entpacken, ./hwsaga/hwsaga /pfad/zu/HW.CUE"
