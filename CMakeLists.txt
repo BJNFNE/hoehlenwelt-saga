@@ -80,3 +80,17 @@ else()
 endif()
 
 install(TARGETS hwsaga RUNTIME DESTINATION bin BUNDLE DESTINATION .)
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_PACKAGE_NAME "hwsaga")
+    set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+    
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Taktloss")
+    
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Engine für die Höhlenwelt-Saga")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+endif()
+
+include(CPack)
